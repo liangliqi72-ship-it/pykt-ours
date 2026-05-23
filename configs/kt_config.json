@@ -108,6 +108,35 @@
         "d_model": 256,
         "n_blocks": 1,
         "dropout": 0.05,
-        "d_ff": 256
+        "d_ff": 256,
+        "num_attn_heads": 8,
+        "num_groups": 9,
+        "alpha_feat_dim": 5,
+        "dugp_mode": "full",
+        "fixed_alpha": 0.5,
+        "alpha_hidden_dim": 64,
+        "alpha_init_bias": 2.94443897917,
+        "dugp_layer_norm": false,
+        "detach_distance": false,
+        "dugp_residual_scale": 0.1,
+        "learnable_residual_scale": true
+    },
+    "akt_dugp": {
+        "learning_rate": 1e-05,
+        "d_model": 256,
+        "n_blocks": 1,
+        "dropout": 0.05,
+        "d_ff": 256,
+        "num_attn_heads": 8,
+        "num_groups": 9,
+        "alpha_feat_dim": 5,
+        "dugp_mode": "full",
+        "fixed_alpha": 0.5,
+        "alpha_hidden_dim": 64,
+        "alpha_init_bias": 2.94443897917,
+        "dugp_layer_norm": false,
+        "detach_distance": false,
+        "dugp_residual_scale": 0.1,
+        "learnable_residual_scale": true
     }
 }

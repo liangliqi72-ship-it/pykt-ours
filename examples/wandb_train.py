@@ -57,14 +57,15 @@ def main(params):
             train_config["batch_size"] = 32 
         if model_name in ["dtransformer"]:
             train_config["batch_size"] = 32 ## because of OOM
-        if model_name in ["akt_ours", "akt"]:
+        if model_name in ["akt_ours", "akt_dugp", "akt"]:
             train_config["batch_size"] = 32 ## because of OOM
         
         train_config["seed"] = params["seed"]
 
         model_config = copy.deepcopy(params)
-        for key in ["model_name", "dataset_name", "emb_type", "save_dir", "fold", "seed"]:
-            del model_config[key]
+        for key in ["model_name", "dataset_name", "emb_type", "save_dir", "fold", "seed", "batch_size", "num_epochs"]:
+            if key in model_config:
+                del model_config[key]
         if 'batch_size' in params:
             train_config["batch_size"] = params['batch_size']
         if 'num_epochs' in params:
@@ -113,7 +114,7 @@ def main(params):
 
     save_config(train_config, model_config, data_config[dataset_name], params, ckpt_path)
     learning_rate = params["learning_rate"]
-    for remove_item in ['use_wandb','learning_rate','add_uuid','l2']:
+    for remove_item in ['use_wandb','learning_rate','add_uuid','l2','weight_decay','batch_size','num_epochs']:
         if remove_item in model_config:
             del model_config[remove_item]
     if model_name in ["saint","saint++", "sakt", "atdkt", "simplekt","stablekt", "datakt","folibikt"]:

@@ -72,6 +72,28 @@ def parse_dugp_alpha_feats(s, seq_len, feat_dim=5):
 
     return steps
 
+def parse_int_seq(s):
+    """Parse pyKT comma-separated ids.
+
+    Some preprocessed files may contain multi-concept tokens like "12_34".
+    Sequence-level KT dataloaders require one integer per timestep, so we use
+    the first valid concept id as a stable no-crash fallback.
+    """
+    vals = []
+    for item in str(s).split(","):
+        item = item.strip()
+        if not item or item.lower() == "nan":
+            vals.append(-1)
+            continue
+        if "_" in item:
+            item = item.split("_")[0]
+        try:
+            vals.append(int(float(item)))
+        except Exception:
+            vals.append(-1)
+    return vals
+
+
 
 FloatTensor = torch.FloatTensor
 LongTensor = torch.LongTensor
@@ -92,9 +114,12 @@ class KTDataset(Dataset):
         sequence_path = file_path
         self.input_type = input_type
         self.qtest = qtest
-        self.group_k = 8
+        # DUGP settings. Env vars make official experiments with different K easy
+        # without changing pyKT call signatures. Defaults match the current paper setup.
+        self.group_k = int(os.environ.get("DUGP_GROUP_K", "8"))
         self.unknown_group = self.group_k
-        self.alpha_feat_dim = 5
+        self.alpha_feat_dim = int(os.environ.get("DUGP_ALPHA_FEAT_DIM", "5"))
+        self.require_dugp = os.environ.get("DUGP_REQUIRE", "0") == "1"
         folds = sorted(list(folds))
         folds_str = "_" + "_".join([str(_) for _ in folds])
         if self.qtest:
@@ -249,7 +274,7 @@ class KTDataset(Dataset):
 
         seq_path = Path(sequence_path)
         dugp_group_path = seq_path.with_name(
-            seq_path.stem + "_dugp_causal_group_k8" + seq_path.suffix
+            seq_path.stem + f"_dugp_causal_group_k{self.group_k}" + seq_path.suffix
         )
 
         use_dugp_group = dugp_group_path.exists()
@@ -277,10 +302,14 @@ class KTDataset(Dataset):
             group_seq_list = group_df[group_col].astype(str).tolist()
             alpha_feat_list = group_df[alpha_col].astype(str).tolist()
         else:
-            raise FileNotFoundError(
-                f"DUGP causal group file not found at {dugp_group_path}. "
-                "Please run generate_dugp_causal_group.py first."
-            )
+            if self.require_dugp:
+                raise FileNotFoundError(
+                    f"DUGP causal group file not found at {dugp_group_path}. "
+                    "Please run generate_dugp_causal_group.py first, or set DUGP_REQUIRE=0 for non-DUGP baselines."
+                )
+            print(f"[Warning] DUGP causal group file not found at {dugp_group_path}. Use unknown groups and zero alpha features.")
+            group_seq_list = None
+            alpha_feat_list = None
 
 
         interaction_num = 0
@@ -326,9 +355,9 @@ class KTDataset(Dataset):
 
 
             #use kc_id or question_id as input
-            dori["cseqs"].append([int(_) for _ in row["concepts"].split(",")])
+            dori["cseqs"].append(parse_int_seq(row["concepts"]))
             if "questions" in self.input_type:
-                dori["qseqs"].append([int(_) for _ in row["questions"].split(",")])
+                dori["qseqs"].append(parse_int_seq(row["questions"]))
             if "timestamps" in row:
                 dori["tseqs"].append([int(_) for _ in row["timestamps"].split(",")])
             if "usetimes" in row:

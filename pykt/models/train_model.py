@@ -66,7 +66,7 @@ def cal_loss(model, ys, r, rshft, sm, preloss=[]):
         loss_w2 = loss_w2.mean() / model.num_c
 
         loss = loss + model.lambda_r * loss_r + model.lambda_w1 * loss_w1 + model.lambda_w2 * loss_w2
-    elif model_name in ["akt","akt_ours","extrakt","folibikt", "robustkt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx","lefokt_akt", "dtransformer", "fluckt"]:
+    elif model_name in ["akt","akt_ours","akt_dugp","extrakt","folibikt", "robustkt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx","lefokt_akt", "dtransformer", "fluckt"]:
         y = torch.masked_select(ys[0], sm)
         t = torch.masked_select(rshft, sm)
         loss = binary_cross_entropy(y.double(), t.double()) + preloss[0]
@@ -122,7 +122,7 @@ def model_forward(model, data, rel=None):
     cgroup_id = None
     calpha_feat = None
 
-    if model_name == "akt_ours":
+    if model_name in ["akt_ours", "akt_dugp"]:
         if group_id is not None:
             if shft_group_id is not None:
                 cgroup_id = torch.cat((group_id[:, 0:1], shft_group_id), dim=1)
@@ -264,9 +264,9 @@ def model_forward(model, data, rel=None):
     elif model_name in ["saint"]:
         y = model(cq.long(), cc.long(), r.long())
         ys.append(y[:, 1:])
-    elif model_name in ["akt", "akt_ours", "extrakt","folibikt", "robustkt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx", "lefokt_akt", "fluckt"]:               
+    elif model_name in ["akt", "akt_ours", "akt_dugp", "extrakt","folibikt", "robustkt", "akt_vector", "akt_norasch", "akt_mono", "akt_attn", "aktattn_pos", "aktmono_pos", "akt_raschx", "akt_raschy", "aktvec_raschx", "lefokt_akt", "fluckt"]:               
         
-        if model_name == "akt_ours":
+        if model_name in ["akt_ours", "akt_dugp"]:
             y, reg_loss = model(
                 q_data=cc.long(),
                 target=cr.long(),
@@ -354,7 +354,7 @@ def train_model(model, train_loader, valid_loader, num_epochs, opt, ckpt_path, t
 
 
             # ours: debug alpha distribution
-            if model.model_name == "akt_ours" and hasattr(model, "last_alpha") and train_step % 200 == 0:
+            if model.model_name in ["akt_ours", "akt_dugp"] and hasattr(model, "last_alpha") and train_step % 200 == 0:
                 a = model.last_alpha.detach().cpu()
                 print(
                     "ALPHA DEBUG:",

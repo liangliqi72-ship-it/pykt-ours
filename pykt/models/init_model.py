@@ -38,6 +38,7 @@ from .ukt import UKT
 from .hcgkt import HCGKT
 from .robustkt import Robustkt
 from .akt_ours import AKTOurs
+from .akt_dugp import AKTDUGP
 
 
 device = "cpu" if not torch.cuda.is_available() else "cuda"
@@ -61,6 +62,8 @@ def init_model(model_name, model_config, data_config, emb_type):
         model = AKT(data_config["num_c"], data_config["num_q"], **model_config, emb_type=emb_type, emb_path=data_config["emb_path"]).to(device)
     elif model_name == "akt_ours":
         model = AKTOurs(data_config["num_c"], data_config["num_q"], **model_config, emb_type=emb_type, emb_path=data_config["emb_path"]).to(device)
+    elif model_name == "akt_dugp":
+        model = AKTDUGP(data_config["num_c"], data_config["num_q"], **model_config, emb_type=emb_type, emb_path=data_config["emb_path"]).to(device)
     elif model_name == "lefokt_akt":
         model = LEFOKT_AKT(data_config["num_c"], data_config["num_q"], **model_config, emb_type=emb_type, emb_path=data_config["emb_path"]).to(device)
     elif model_name == "extrakt":
